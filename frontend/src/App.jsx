@@ -26,6 +26,13 @@ const collegeTopics = [
   ["Library", "Hours, borrowing, renewals and digital resources"]
 ];
 
+const campusHighlights = [
+  { label: "Admissions", value: "12 seats left", detail: "B.Tech open counselling", tone: "green" },
+  { label: "Scholarships", value: "3 deadlines", detail: "Apply before Friday", tone: "blue" },
+  { label: "Hostel", value: "18 rooms free", detail: "Girls wing available", tone: "amber" },
+  { label: "Placements", value: "2 drives today", detail: "Infosys + TCS", tone: "violet" }
+];
+
 const iconMap = {
   search: "⌕", bell: "♢", menu: "☰", plus: "+", send: "↑", attach: "⌕", mic: "◉",
   copy: "▣", like: "♧", dislike: "♤", refresh: "↻", sun: "☼", moon: "◐", close: "×"
@@ -257,7 +264,29 @@ export default function App() {
 
         <section className="chat-panel">
           <div className="conversation" aria-live="polite">
-            {activeChat.messages.length === 1 && !loading && <div className="welcome-copy"><div className="welcome-icon">✦</div><p className="welcome-kicker">YOUR CAMPUS COMPANION</p><h2>What can I help you find?</h2><p>Ask a question about college life and get pointed to the right office, rule, or resource.</p></div>}
+            {activeChat.messages.length === 1 && !loading && (
+              <>
+                <div className="welcome-copy">
+                  <div className="welcome-icon">✦</div>
+                  <p className="welcome-kicker">YOUR CAMPUS COMPANION</p>
+                  <h2>What can I help you find?</h2>
+                  <p>Ask a question about college life and get pointed to the right office, rule, or resource.</p>
+                </div>
+
+                <div className="insight-grid">
+                  {campusHighlights.map((item) => (
+                    <div key={item.label} className={`insight-card ${item.tone}`}>
+                      <div className="insight-header">
+                        <span>{item.label}</span>
+                        <b>•</b>
+                      </div>
+                      <strong>{item.value}</strong>
+                      <small>{item.detail}</small>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
             {activeChat.messages.map((message, index) => (
               <div key={`${activeChat.id}-${index}`} className={`message ${message.role} ${message.error ? "message-error" : ""}`}><div className="avatar">{message.role === "bot" ? "✦" : "You"}</div><div className="message-content"><div className="message-meta"><span className="message-author">{message.role === "bot" ? "Clyvora" : "You"}</span><time>{formatTime(message.timestamp)}</time></div><p>{message.text}</p><MessageActions message={message} onCopy={copyResponse} onFeedback={setFeedback} onRegenerate={regenerateResponse} /></div></div>
             ))}
