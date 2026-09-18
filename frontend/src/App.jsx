@@ -77,7 +77,54 @@ function MessageActions({ message, onCopy, onFeedback, onRegenerate }) {
   );
 }
 
+function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    if (!email.trim() || !password.trim()) return;
+    onLogin({ name: email.split("@")[0] || "Student", email });
+  }
+
+  return (
+    <main className="login-shell">
+      <section className="login-art" aria-label="Clyvora student support">
+        <div className="login-art-top"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
+        <div className="login-art-copy"><p className="eyebrow">YOUR CAMPUS, CONNECTED</p><h1>Everything you need to move student life forward.</h1><p>Find answers, discover resources, and stay close to the college community from one thoughtful support desk.</p></div>
+        <div className="login-orbit orbit-one" /><div className="login-orbit orbit-two" /><div className="login-stat"><span className="status-dot" /><div><strong>Student support online</strong><small>Ready when you are</small></div></div>
+      </section>
+      <section className="login-panel">
+        <div className="login-panel-inner">
+          <div className="mobile-login-brand"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
+          <p className="eyebrow">WELCOME BACK</p>
+          <h2>Sign in to your desk.</h2>
+          <p className="login-subtitle">Use your college account to continue to your student support space.</p>
+          <form className="login-form" onSubmit={handleSubmit}>
+            <label htmlFor="student-email">College email</label>
+            <input id="student-email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@college.edu" autoComplete="email" required />
+            <div className="password-label"><label htmlFor="student-password">Password</label><button type="button" onClick={() => setShowPassword(previous => !previous)}>{showPassword ? "Hide" : "Show"}</button></div>
+            <input id="student-password" type={showPassword ? "text" : "password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="Enter your password" autoComplete="current-password" required />
+            <div className="login-options"><label><input type="checkbox" /> <span>Remember me</span></label><button type="button" onClick={() => window.alert("Please contact your college IT helpdesk to reset your password.")}>Forgot password?</button></div>
+            <button className="login-submit" type="submit">Sign in <span>→</span></button>
+          </form>
+          <p className="login-note">By continuing, you agree to your college's acceptable use policy.</p>
+          <div className="login-help"><span>New to Clyvora?</span><button type="button" onClick={() => setEmail("student@college.edu")}>Use demo account</button></div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export default function App() {
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("clyvora-user")) || null;
+    } catch {
+      return null;
+    }
+  });
   const [chats, setChats] = useState(loadChats);
   const [activeChatId, setActiveChatId] = useState(() => loadChats()[0].id);
   const [input, setInput] = useState("");
@@ -95,6 +142,18 @@ export default function App() {
   const activeChat = chats.find(chat => chat.id === activeChatId) || chats[0];
   const filteredChats = chats.filter(chat => chat.title.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredTopics = collegeTopics.filter(([title, description]) => `${title} ${description}`.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  function handleLogin(nextUser) {
+    setUser(nextUser);
+    localStorage.setItem("clyvora-user", JSON.stringify(nextUser));
+  }
+
+  function handleLogout() {
+    setUser(null);
+    localStorage.removeItem("clyvora-user");
+    setNotificationsOpen(false);
+    setMobileSidebarOpen(false);
+  }
 
   useEffect(() => {
     localStorage.setItem("college-chat-chats", JSON.stringify(chats));
@@ -122,6 +181,8 @@ export default function App() {
     const timeout = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timeout);
   }, [toast]);
+
+  if (!user) return <LoginPage onLogin={handleLogin} />;
 
   function updateChat(chatId, changes) {
     setChats(previousChats => previousChats.map(chat => (
@@ -258,7 +319,7 @@ export default function App() {
         <header className="topbar">
           <button className="mobile-menu" onClick={() => setMobileSidebarOpen(true)} aria-label="Open menu"><Icon name="menu" /></button>
           <div><p className="eyebrow">COLLEGE HELP DESK</p><h1>{activeChat.title}</h1></div>
-          <div className="topbar-actions"><button className="icon-button notification-button" onClick={() => setNotificationsOpen(previous => !previous)} aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button><button className="theme-button" onClick={() => setDarkMode(previous => !previous)} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}><Icon name={darkMode ? "sun" : "moon"} /><span>{darkMode ? "Light" : "Dark"}</span></button><div className="topbar-badge"><span /> AI assistant</div><div className="profile-chip"><div className="profile-avatar">VA</div><div><strong>Student</strong><span>Online</span></div></div></div>
+          <div className="topbar-actions"><button className="icon-button notification-button" onClick={() => setNotificationsOpen(previous => !previous)} aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button><button className="theme-button" onClick={() => setDarkMode(previous => !previous)} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}><Icon name={darkMode ? "sun" : "moon"} /><span>{darkMode ? "Light" : "Dark"}</span></button><div className="topbar-badge"><span /> AI assistant</div><button className="profile-chip" onClick={handleLogout} title="Sign out"><div className="profile-avatar">{user.name.slice(0, 2).toUpperCase()}</div><div><strong>{user.name}</strong><span>Sign out</span></div></button></div>
           {notificationsOpen && <div className="notification-popover"><strong>Notifications</strong><p>You're all caught up. New college notices will appear here.</p></div>}
         </header>
 
