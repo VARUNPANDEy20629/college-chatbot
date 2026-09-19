@@ -22,6 +22,15 @@ node server.js
 
 The API runs at `http://localhost:5000`.
 
+The backend answers the built-in college FAQs directly. To enable answers for general questions, set an OpenAI-compatible API key before starting it:
+
+```powershell
+$env:OPENAI_API_KEY = "your-api-key"
+npm start
+```
+
+Optional settings are `OPENAI_MODEL` and `OPENAI_API_URL`, which allow a compatible provider or local gateway to be used. Do not commit API keys to the repository.
+
 ### Frontend
 
 ```bash

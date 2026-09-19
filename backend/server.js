@@ -113,7 +113,7 @@ function containsKeyword(question, keyword) {
   return new RegExp(`\\b${escapedKeyword}\\b`, "i").test(question);
 }
 
-function getAnswer(question) {
+function getCollegeAnswer(question) {
   const q = question.toLowerCase().replace(/\s+/g, " ");
   let bestMatch = null;
   let bestMatchLength = 0;
@@ -127,11 +127,80 @@ function getAnswer(question) {
     }
   }
 
-  if (bestMatch) {
-    return bestMatch.answer;
+  return bestMatch?.answer || null;
+}
+
+function getEmotionTone(question) {
+  const q = question.toLowerCase();
+
+  if (/\b(emergency|danger|urgent|help me now|hurt myself|unsafe)\b/.test(q)) {
+    return "The user may be in urgent distress. Lead with calm, direct safety guidance and recommend immediate professional or emergency help when appropriate.";
+  }
+  if (/\b(sad|depressed|lonely|crying|heartbroken|upset|hopeless)\b/.test(q)) {
+    return "The user may be feeling sad or lonely. Acknowledge their feelings warmly, avoid judgment, and offer gentle practical next steps.";
+  }
+  if (/\b(stress|stressed|anxious|anxiety|worried|nervous|overwhelmed|panic)\b/.test(q)) {
+    return "The user may be stressed or anxious. Respond calmly, validate the feeling, break advice into small steps, and avoid sounding dismissive.";
+  }
+  if (/\b(angry|frustrated|annoyed|hate|terrible|ridiculous)\b/.test(q)) {
+    return "The user may be frustrated. Acknowledge the problem without arguing, then give a clear and useful next step.";
+  }
+  if (/\b(happy|excited|great news|celebrate|congratulations|proud)\b/.test(q)) {
+    return "The user may be happy or excited. Match their positive energy naturally while staying helpful.";
   }
 
-  return "I do not have that answer in the college knowledge base yet. Try asking about admissions, courses, fees, attendance, exams, results, timetable, library, hostel, transport, scholarships, documents, placements, student life, IT support, health, or grievances. For official dates, fees, contacts, and rules, please verify the latest college notice.";
+  return "Use a warm, natural, conversational tone. Do not pretend to have human feelings or personal experiences.";
+}
+
+function addEmpathy(question, answer) {
+  const q = question.toLowerCase();
+
+  if (/\b(stress|stressed|anxious|anxiety|worried|nervous|overwhelmed|panic)\b/.test(q)) {
+    return `That sounds stressful. Here is the practical information: ${answer}`;
+  }
+  if (/\b(sad|depressed|lonely|crying|heartbroken|upset|hopeless)\b/.test(q)) {
+    return `I am sorry you are dealing with this. Here is what may help: ${answer}`;
+  }
+  if (/\b(frustrated|annoyed|angry)\b/.test(q)) {
+    return `I understand why that would be frustrating. Here is the next step: ${answer}`;
+  }
+
+  return answer;
+}
+
+async function getAnswer(question) {
+  const collegeAnswer = getCollegeAnswer(question);
+  if (collegeAnswer) return addEmpathy(question, collegeAnswer);
+
+  if (!process.env.OPENAI_API_KEY) {
+    return "I can answer general questions too, but this assistant has no AI provider configured yet. Add an OPENAI_API_KEY to the backend environment, then ask me anything. For college questions, try admissions, fees, exams, library, hostel, scholarships, or placements.";
+  }
+
+  const response = await fetch(process.env.OPENAI_API_URL || "https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a helpful, concise general-purpose assistant. Answer questions on any topic. Be honest when information may be outdated, do not invent facts, and recommend qualified professionals for medical, legal, or financial decisions. ${getEmotionTone(question)}`
+        },
+        { role: "user", content: question }
+      ],
+      temperature: 0.4
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI provider returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content?.trim() || "I could not generate an answer for that question.";
 }
 
 app.get("/", (req, res) => {
@@ -142,19 +211,20 @@ app.get("/api/topics", (req, res) => {
   res.json({ topics: [...new Set(faqs.map(faq => faq.category))] });
 });
 
-app.post("/api/chat", (req, res) => {
+app.post("/api/chat", async (req, res) => {
   const { message } = req.body;
 
   if (!message || !message.trim()) {
     return res.status(400).json({ error: "Message is required" });
   }
 
-  const answer = getAnswer(message);
-
-  res.json({
-    question: message,
-    answer
-  });
+  try {
+    const answer = await getAnswer(message);
+    res.json({ question: message, answer });
+  } catch (error) {
+    console.error("AI provider error:", error.message);
+    res.status(502).json({ error: "The general AI service is temporarily unavailable." });
+  }
 });
 
 app.listen(PORT, () => {

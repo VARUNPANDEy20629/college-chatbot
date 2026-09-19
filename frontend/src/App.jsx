@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 const welcomeMessage = {
   role: "bot",
-  text: "Hello! I’m your college AI assistant. I can help you with admissions, courses, fees, attendance, exams, results, timetables, library, hostel, scholarships, placements, and campus services. What would you like to know?",
+  text: "Hello! I’m Clyvora, your AI assistant. Ask me about college or anything else, and I’ll do my best to help.",
   timestamp: Date.now()
 };
 
@@ -92,7 +92,7 @@ function LoginPage({ onLogin }) {
     <main className="login-shell">
       <section className="login-art" aria-label="Clyvora student support">
         <div className="login-art-top"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
-        <div className="login-art-copy"><p className="eyebrow">YOUR CAMPUS, CONNECTED</p><h1>Everything you need to move student life forward.</h1><p>Find answers, discover resources, and stay close to the college community from one thoughtful support desk.</p></div>
+        <div className="login-art-copy"><p className="eyebrow">YOUR QUESTIONS, CONNECTED</p><h1>One thoughtful assistant for whatever comes next.</h1><p>Find answers, explore ideas, and stay close to the support you need from one helpful desk.</p></div>
         <div className="login-orbit orbit-one" /><div className="login-orbit orbit-two" /><div className="login-stat"><span className="status-dot" /><div><strong>Student support online</strong><small>Ready when you are</small></div></div>
       </section>
       <section className="login-panel">
@@ -100,16 +100,16 @@ function LoginPage({ onLogin }) {
           <div className="mobile-login-brand"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
           <p className="eyebrow">WELCOME BACK</p>
           <h2>Sign in to your desk.</h2>
-          <p className="login-subtitle">Use your college account to continue to your student support space.</p>
+          <p className="login-subtitle">Sign in to continue to your personal AI support space.</p>
           <form className="login-form" onSubmit={handleSubmit}>
-            <label htmlFor="student-email">College email</label>
+            <label htmlFor="student-email">Email address</label>
             <input id="student-email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@college.edu" autoComplete="email" required />
             <div className="password-label"><label htmlFor="student-password">Password</label><button type="button" onClick={() => setShowPassword(previous => !previous)}>{showPassword ? "Hide" : "Show"}</button></div>
             <input id="student-password" type={showPassword ? "text" : "password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="Enter your password" autoComplete="current-password" required />
-            <div className="login-options"><label><input type="checkbox" /> <span>Remember me</span></label><button type="button" onClick={() => window.alert("Please contact your college IT helpdesk to reset your password.")}>Forgot password?</button></div>
+            <div className="login-options"><label><input type="checkbox" /> <span>Remember me</span></label><button type="button" onClick={() => window.alert("Please contact your account administrator to reset your password.")}>Forgot password?</button></div>
             <button className="login-submit" type="submit">Sign in <span>→</span></button>
           </form>
-          <p className="login-note">By continuing, you agree to your college's acceptable use policy.</p>
+          <p className="login-note">By continuing, you agree to the acceptable use policy.</p>
           <div className="login-help"><span>New to Clyvora?</span><button type="button" onClick={() => setEmail("student@college.edu")}>Use demo account</button></div>
         </div>
       </section>
@@ -236,7 +236,7 @@ export default function App() {
     try {
       updateChat(activeChat.id, { messages: await requestAnswer(question, nextMessages) });
     } catch {
-      updateChat(activeChat.id, { messages: [...nextMessages, { role: "bot", text: "I could not connect to the college assistant. Please check that the backend is running and try again.", timestamp: Date.now(), error: true }] });
+      updateChat(activeChat.id, { messages: [...nextMessages, { role: "bot", text: "I could not connect to the assistant. Please check that the backend is running and try again.", timestamp: Date.now(), error: true }] });
       setToast("Assistant connection failed");
     } finally {
       setLoading(false);
@@ -318,7 +318,7 @@ export default function App() {
       <main className="workspace">
         <header className="topbar">
           <button className="mobile-menu" onClick={() => setMobileSidebarOpen(true)} aria-label="Open menu"><Icon name="menu" /></button>
-          <div><p className="eyebrow">COLLEGE HELP DESK</p><h1>{activeChat.title}</h1></div>
+          <div><p className="eyebrow">AI HELP DESK</p><h1>{activeChat.title}</h1></div>
           <div className="topbar-actions"><button className="icon-button notification-button" onClick={() => setNotificationsOpen(previous => !previous)} aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button><button className="theme-button" onClick={() => setDarkMode(previous => !previous)} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}><Icon name={darkMode ? "sun" : "moon"} /><span>{darkMode ? "Light" : "Dark"}</span></button><div className="topbar-badge"><span /> AI assistant</div><button className="profile-chip" onClick={handleLogout} title="Sign out"><div className="profile-avatar">{user.name.slice(0, 2).toUpperCase()}</div><div><strong>{user.name}</strong><span>Sign out</span></div></button></div>
           {notificationsOpen && <div className="notification-popover"><strong>Notifications</strong><p>You're all caught up. New college notices will appear here.</p></div>}
         </header>
@@ -331,7 +331,7 @@ export default function App() {
                   <div className="welcome-icon">✦</div>
                   <p className="welcome-kicker">YOUR CAMPUS COMPANION</p>
                   <h2>What can I help you find?</h2>
-                  <p>Ask a question about college life and get pointed to the right office, rule, or resource.</p>
+                  <p>Ask about college, work, learning, planning, or anything on your mind.</p>
                 </div>
 
                 <div className="insight-grid">
@@ -357,7 +357,7 @@ export default function App() {
 
           <div className="quick-actions"><span>Explore</span>{quickActions.map(([label, question, symbol]) => <button key={label} onClick={() => setInput(question)}><b>{symbol}</b>{label}</button>)}</div>
           <form onSubmit={sendMessage} className="input-area"><input ref={fileInputRef} className="file-input" type="file" onChange={handleAttachment} /><button type="button" className="input-tool" onClick={() => fileInputRef.current?.click()} aria-label="Attach file" title="Attach file"><Icon name="attach" /></button><input className="chat-input" value={input} onChange={event => setInput(event.target.value)} placeholder="Message Clyvora..." aria-label="Ask the college assistant" /><button type="button" className="input-tool voice-button" onClick={startVoiceInput} aria-label="Use voice input" title="Voice input"><Icon name="mic" /></button><button type="submit" className="send-button" disabled={loading || !input.trim()} aria-label="Send message"><Icon name="send" /></button></form>
-          <p className="input-note">Clyvora can make mistakes. Verify important information with your college office.</p>
+          <p className="input-note">Clyvora can make mistakes. Verify important information with a trusted source.</p>
         </section>
       </main>
 
