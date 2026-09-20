@@ -23,7 +23,14 @@ const collegeTopics = [
   ["Scholarships", "Merit, need-based aid and renewal guidance"],
   ["Placements", "Internships, company drives and career support"],
   ["Hostel", "Applications, rooms, mess and residence rules"],
-  ["Library", "Hours, borrowing, renewals and digital resources"]
+  ["Library", "Hours, borrowing, renewals and digital resources"],
+  ["Orientation", "Registration, induction and first-week guidance"],
+  ["Academic support", "Advisors, tutorials, assignments and study help"],
+  ["Accessibility", "Accommodations, assistive technology and support"],
+  ["Campus facilities", "Labs, classrooms, cafeterias and sports spaces"],
+  ["International students", "Visa, arrival, insurance and registration guidance"],
+  ["Career development", "CV reviews, interviews, skills and internships"],
+  ["Alumni", "Mentoring, networking and graduate services"]
 ];
 
 const campusHighlights = [
