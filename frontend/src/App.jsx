@@ -42,8 +42,34 @@ const campusHighlights = [
 
 const iconMap = {
   search: "⌕", bell: "♢", menu: "☰", plus: "+", send: "↑", attach: "⌕", mic: "◉",
-  copy: "▣", like: "♧", dislike: "♤", refresh: "↻", sun: "☼", moon: "◐", close: "×"
+  copy: "▣", like: "♧", dislike: "♤", refresh: "↻", sun: "☼", moon: "◐", close: "×", logout: "↪"
 };
+
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const googleIdentityScriptUrl = "https://accounts.google.com/gsi/client";
+let googleIdentityScriptPromise;
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) return Promise.resolve();
+  if (!googleIdentityScriptPromise) {
+    googleIdentityScriptPromise = new Promise((resolve, reject) => {
+      const existingScript = document.querySelector(`script[src="${googleIdentityScriptUrl}"]`);
+      const script = existingScript || document.createElement("script");
+      script.addEventListener("load", resolve, { once: true });
+      script.addEventListener("error", reject, { once: true });
+      if (!existingScript) {
+        script.src = googleIdentityScriptUrl;
+        script.async = true;
+        script.defer = true;
+        document.head.append(script);
+      }
+    }).catch(error => {
+      googleIdentityScriptPromise = null;
+      throw error;
+    });
+  }
+  return googleIdentityScriptPromise;
+}
 
 function Icon({ name }) {
   return <span className={`icon icon-${name}`} aria-hidden="true">{iconMap[name] || "•"}</span>;
@@ -84,10 +110,56 @@ function MessageActions({ message, onCopy, onFeedback, onRegenerate }) {
   );
 }
 
-function LoginPage({ onLogin }) {
+function LoginPage({ onLogin, onGoogleLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [googleError, setGoogleError] = useState("");
+  const googleButtonRef = useRef(null);
+  const googleLoginRef = useRef(onGoogleLogin);
+
+  useEffect(() => {
+    googleLoginRef.current = onGoogleLogin;
+  }, [onGoogleLogin]);
+
+  useEffect(() => {
+    if (!googleClientId) {
+      setGoogleError("Add VITE_GOOGLE_CLIENT_ID to the frontend environment to enable Google sign-in.");
+      return undefined;
+    }
+
+    let active = true;
+    loadGoogleIdentityScript().then(() => {
+      if (!active || !googleButtonRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async ({ credential }) => {
+          setGoogleError("");
+          try {
+            await googleLoginRef.current(credential);
+          } catch (error) {
+            setGoogleError(error.message || "Google sign-in failed. Please try again.");
+          }
+        },
+        auto_select: false
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "rectangular",
+        width: Math.min(400, googleButtonRef.current.clientWidth),
+        logo_alignment: "left"
+      });
+    }).catch(() => {
+      if (active) setGoogleError("Google sign-in could not load. Check your connection and try again.");
+    });
+
+    return () => {
+      active = false;
+      if (googleButtonRef.current) googleButtonRef.current.innerHTML = "";
+    };
+  }, []);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -108,6 +180,11 @@ function LoginPage({ onLogin }) {
           <p className="eyebrow">WELCOME BACK</p>
           <h2>Sign in to your desk.</h2>
           <p className="login-subtitle">Sign in to continue to your personal AI support space.</p>
+          <div className="google-button-slot" ref={googleButtonRef}>
+            {!googleClientId && <button className="google-signin-fallback" type="button" disabled><span aria-hidden="true">G</span> Continue with Google</button>}
+          </div>
+          {googleError && <p className="google-signin-error" role="status">{googleError}</p>}
+          <div className="login-divider"><span>or continue with email</span></div>
           <form className="login-form" onSubmit={handleSubmit}>
             <label htmlFor="student-email">Email address</label>
             <input id="student-email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@college.edu" autoComplete="email" required />
@@ -162,6 +239,17 @@ export default function App() {
     setMobileSidebarOpen(false);
   }
 
+  async function handleGoogleLogin(credential) {
+    const response = await fetch("http://localhost:5000/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Google sign-in could not be verified.");
+    handleLogin(data.user);
+  }
+
   useEffect(() => {
     localStorage.setItem("college-chat-chats", JSON.stringify(chats));
   }, [chats]);
@@ -189,7 +277,7 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  if (!user) return <LoginPage onLogin={handleLogin} />;
+  if (!user) return <LoginPage onLogin={handleLogin} onGoogleLogin={handleGoogleLogin} />;
 
   function updateChat(chatId, changes) {
     setChats(previousChats => previousChats.map(chat => (
@@ -326,7 +414,7 @@ export default function App() {
         <header className="topbar">
           <button className="mobile-menu" onClick={() => setMobileSidebarOpen(true)} aria-label="Open menu"><Icon name="menu" /></button>
           <div><p className="eyebrow">AI HELP DESK</p><h1>{activeChat.title}</h1></div>
-          <div className="topbar-actions"><button className="icon-button notification-button" onClick={() => setNotificationsOpen(previous => !previous)} aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button><button className="theme-button" onClick={() => setDarkMode(previous => !previous)} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}><Icon name={darkMode ? "sun" : "moon"} /><span>{darkMode ? "Light" : "Dark"}</span></button><div className="topbar-badge"><span /> AI assistant</div><button className="profile-chip" onClick={handleLogout} title="Sign out"><div className="profile-avatar">{user.name.slice(0, 2).toUpperCase()}</div><div><strong>{user.name}</strong><span>Sign out</span></div></button></div>
+          <div className="topbar-actions"><button className="icon-button notification-button" onClick={() => setNotificationsOpen(previous => !previous)} aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button><button className="theme-button" onClick={() => setDarkMode(previous => !previous)} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}><Icon name={darkMode ? "sun" : "moon"} /><span>{darkMode ? "Light" : "Dark"}</span></button><div className="topbar-badge"><span /> AI assistant</div><div className="profile-chip"><div className="profile-avatar">{user.name.slice(0, 2).toUpperCase()}</div><div><strong>{user.name}</strong><span>{user.email}</span></div></div><button className="logout-button" onClick={handleLogout} title="Sign out" aria-label="Sign out"><Icon name="logout" /><span>Sign out</span></button></div>
           {notificationsOpen && <div className="notification-popover"><strong>Notifications</strong><p>You're all caught up. New college notices will appear here.</p></div>}
         </header>
 
