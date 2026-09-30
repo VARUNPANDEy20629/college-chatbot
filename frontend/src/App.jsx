@@ -171,13 +171,13 @@ function LoginPage({ onLogin, onGoogleLogin }) {
     <main className="login-shell">
       <section className="login-art" aria-label="Clyvora student support">
         <div className="login-art-top"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
-        <div className="login-art-copy"><p className="eyebrow">YOUR QUESTIONS, CONNECTED</p><h1>One thoughtful assistant for whatever comes next.</h1><p>Find answers, explore ideas, and stay close to the support you need from one helpful desk.</p></div>
-        <div className="login-orbit orbit-one" /><div className="login-orbit orbit-two" /><div className="login-stat"><span className="status-dot" /><div><strong>Student support online</strong><small>Ready when you are</small></div></div>
+        <div className="login-art-copy"><p className="eyebrow">YOUR CAMPUS, IN REACH</p><h1>Make room for what matters next.</h1><p>Your campus questions, guidance, and next steps come together in one thoughtful place.</p></div>
+        <div className="login-stat"><span className="status-dot" /><div><strong>Student support online</strong><small>Here whenever you need us</small></div><span className="login-stat-mark" aria-hidden="true">24/7</span></div>
       </section>
       <section className="login-panel">
         <div className="login-panel-inner">
           <div className="mobile-login-brand"><div className="brand-mark">✦</div><strong>Clyvora</strong></div>
-          <p className="eyebrow">WELCOME BACK</p>
+          <div className="login-access-label"><p className="eyebrow">WELCOME BACK</p><span><i aria-hidden="true" /> SECURE STUDENT ACCESS</span></div>
           <h2>Sign in to your desk.</h2>
           <p className="login-subtitle">Sign in to continue to your personal AI support space.</p>
           <div className="google-button-slot" ref={googleButtonRef}>
